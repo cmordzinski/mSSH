@@ -1,0 +1,46 @@
+#!/bin/bash
+
+starttmux() {
+    # Generate a large random number and assign it to our new window.
+    WINDOWID=$[(RANDOM%99999999)+500]
+    # First host generates the new window
+    local hosts=(${HOSTS})
+    tmux new-window -t ${WINDOWID} "ssh ${hosts[0]}"
+    # Remove the first host from our list, then loop through the remaining list of hosts spawning new panes and tiling them
+    unset hosts[0];
+    for i in "${hosts[@]}"; do
+        tmux split-window -t ${WINDOWID} -h "ssh ${i}"
+        tmux select-layout -t ${WINDOWID} tiled > /dev/null
+    done
+    # Enable keyboard synchronization for all panes.
+    tmux set-window-option -t ${WINDOWID} synchronize-panes on > /dev/null
+}
+
+# Copy the list of hosts into the HOSTS variable
+HOSTS=${HOSTS:=$*}
+if [ -z "${HOSTS}" ]; then
+    echo
+    echo
+    echo '                .d8888b.   .d8888b.  888    888 '
+    echo '               d88P  Y88b d88P  Y88b 888    888 '
+    echo '               Y88b.      Y88b.      888    888 '
+    echo ' 88888b.d88b.   "Y888b.    "Y888b.   8888888888 '
+    echo ' 888 "888 "88b     "Y88b.     "Y88b. 888    888 '
+    echo ' 888  888  888       "888       "888 888    888 '
+    echo ' 888  888  888 Y88b  d88P Y88b  d88P 888    888 '
+    echo ' 888  888  888  "Y8888P"   "Y8888P"  888    888 '
+    echo
+    echo 'multi pane SSH session autmation for tmux'
+    echo
+    echo 'Usage:'
+    echo  ' ./mssh [/path/to/hosts.txt]'
+    echo  ' ./mssh [user@host1 user@host2 ... user@host5]'
+    echo
+    exit 1
+fi
+
+# If the host list is presented as a file, strip the newlines and use this list instead
+if [ -f $1 ]; then
+    HOSTS=$(sed -e ':a;N;$!ba;s/\n/ /g' ${1})
+fi
+starttmux
