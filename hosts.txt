@@ -1,3 +1,0 @@
-example-server
-example-ip-address
-example-fqdn.example.com
